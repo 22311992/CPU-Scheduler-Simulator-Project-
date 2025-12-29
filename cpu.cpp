@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iomanip>
 #include <climits>
+#include <algorithm>
 using namespace std;
 
 struct Process {
@@ -190,6 +191,69 @@ void runSJF(Node* head, int queueID, ofstream& out) {
     }
 }
 
+
+void runPriority(Node* head, int queueID, ofstream& out) {
+    Node* tempHead = copyList(head);
+    
+    int currentTime = 0, totalWT = 0, count = 0;
+    out << queueID << ":3:";  
+    
+    while (hasProcessInQueue(tempHead, queueID)) {
+        Node* highestPriority = NULL;
+        Node* temp = tempHead;
+        
+        while (temp != NULL) {
+            if (temp->data.queueID == queueID && 
+                temp->data.arrivalTime <= currentTime) {
+                
+                if (!highestPriority || 
+                    temp->data.priority < highestPriority->data.priority ||
+                    (temp->data.priority == highestPriority->data.priority &&
+                     temp->data.arrivalTime < highestPriority->data.arrivalTime)) {
+                    highestPriority = temp;
+                }
+            }
+            temp = temp->next;
+        }
+        
+        if (!highestPriority) {
+            int nextArrival = INT_MAX;
+            temp = tempHead;
+            
+            while (temp != NULL) {
+                if (temp->data.queueID == queueID && 
+                    temp->data.arrivalTime > currentTime) {
+                    nextArrival = min(nextArrival, temp->data.arrivalTime);
+                }
+                temp = temp->next;
+            }
+            
+            if (nextArrival == INT_MAX) break;
+            currentTime = nextArrival;
+            continue;
+        }
+        
+        int wt = max(0, currentTime - highestPriority->data.arrivalTime);
+        out << wt << ":";
+        
+        totalWT += wt;
+        count++;
+        
+        currentTime += highestPriority->data.burstTime;
+        
+        removeNode(tempHead, highestPriority);
+    }
+    
+    double avg = (count == 0) ? 0.0 : (double)totalWT / count;
+    out << fixed << setprecision(2) << avg << endl;
+    
+    while (tempHead) {
+        Node* next = tempHead->next;
+        delete tempHead;
+        tempHead = next;
+    }
+}
+
 int main(int argc, char* argv[]) {
     if (argc != 3) return 1;
 
@@ -216,6 +280,7 @@ int main(int argc, char* argv[]) {
         if (!printed) {
             runFCFS(head, qid, out);
             runSJF(head, qid, out);
+             runPriority(head, qid, out);
         }
         temp = temp->next;
     }
@@ -230,4 +295,6 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
-                            
+       
+
+
