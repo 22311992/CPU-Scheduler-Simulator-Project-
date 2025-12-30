@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -Wall -std=c++11
 
-TARGET = cpu
+TARGET = cpe351
 SRC = cpu.cpp
 
 all:
@@ -13,4 +13,3 @@ test:
 
 clean:
 	rm -f $(TARGET) *.o out1.txt out2.txt
-

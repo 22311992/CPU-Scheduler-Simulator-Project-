@@ -111,24 +111,45 @@ void runFCFS(Node* head, int queueID, ofstream& out) {
     Node* tempHead = copyList(head);
 
     int currentTime = 0, totalWT = 0, count = 0;
-    out << queueID << ":1:";
+    string line = to_string(queueID) + ":1:";
 
-    while (hasProcessInQueue(tempHead, queueID)) {
-        Node* p = findEarliestArrival(tempHead, queueID);
-        if (!p) break;
+    // FCFS = arrival order
+    while (true) {
+        Node* nextProcess = NULL;
+        Node* temp = tempHead;
 
-        int wt = max(0, currentTime - p->data.arrivalTime);
-        out << wt << ":";
+        // find earliest arrival that is not processed yet
+        while (temp != NULL) {
+            if (temp->data.queueID == queueID) {
+                if (!nextProcess ||
+                    temp->data.arrivalTime < nextProcess->data.arrivalTime) {
+                    nextProcess = temp;
+                }
+            }
+            temp = temp->next;
+        }
+
+        if (!nextProcess) break;
+
+        if (currentTime < nextProcess->data.arrivalTime)
+            currentTime = nextProcess->data.arrivalTime;
+
+        int wt = currentTime - nextProcess->data.arrivalTime;
+        line += to_string(wt) + ":";
 
         totalWT += wt;
         count++;
-        currentTime += p->data.burstTime;
+        currentTime += nextProcess->data.burstTime;
 
-        removeNode(tempHead, p);
+        removeNode(tempHead, nextProcess);
     }
 
     double avg = (count == 0) ? 0.0 : (double)totalWT / count;
-    out << fixed << setprecision(2) << avg << endl;
+    stringstream ss;
+    ss << fixed << setprecision(2) << avg;
+    line += ss.str();
+
+    out << line << endl;
 
     while (tempHead) {
         Node* next = tempHead->next;
@@ -136,6 +157,7 @@ void runFCFS(Node* head, int queueID, ofstream& out) {
         tempHead = next;
     }
 }
+
 
 void runSJF(Node* head, int queueID, ofstream& out) {
     Node* tempHead = copyList(head);
